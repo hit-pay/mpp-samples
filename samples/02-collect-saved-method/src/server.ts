@@ -138,17 +138,17 @@ app.get('/tutor-saved', async (c) => {
     while (Date.now() < deadlineMs) {
       try {
         const res = await pollSavedMethod(setup.saved_method_id)
-        if (res.status === 'bound') {
+        if (res.status === 'active') {
           savedMethodStore.set({
             paymentMethod: method,
             currency: price.currency,
             savedMethodId: res.saved_method_id,
             boundAt: new Date().toISOString(),
           })
-          console.log(`[ai-seller] saved method bound: ${price.currency.toUpperCase()}/${method} → ${res.saved_method_id}`)
+          console.log(`[ai-seller] saved method active: ${price.currency.toUpperCase()}/${method} → ${res.saved_method_id}`)
           return
         }
-        if (res.status === 'failed' || res.status === 'expired') {
+        if (res.status === 'detached' || res.status === 'revoked' || res.status === 'expired') {
           console.warn(`[ai-seller] saved method ${method} ${res.status}`)
           return
         }

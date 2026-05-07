@@ -1,12 +1,12 @@
 // HitPay MPP — saved payment methods (embedded direct-link).
 //
-// Wraps two broker endpoints that the @hit-pay/mpp SDK does not expose yet:
-//   POST /v1/saved-payment-methods                   — issue setup URL + pending id
-//   GET  /v1/saved-payment-methods/{id}              — poll bind status
-//   POST /v1/charges  (with saved_method_id)         — silent recurring charge
+// Wraps three broker endpoints that the @hit-pay/mpp SDK does not expose yet:
+//   POST /v1/saved-payment-methods                          — issue setup URL + pending id
+//   GET  /v1/saved-payment-methods/{id}                     — poll status
+//   POST /v1/saved-payment-methods/{id}/charges             — silent recurring charge
 //
-// Request shape mirrors MppServiceClient: every request carries `api_key`
-// and `webhook_salt`. Charges also carry `nonce` and `request_hash` so the
+// Request shape mirrors MppServiceClient: setup carries `api_key` +
+// `webhook_salt`; charge carries `api_key`, `nonce`, `request_hash` so the
 // broker can replay-protect and JWS-sign.
 
 import 'dotenv/config'
@@ -30,7 +30,7 @@ export interface SetupResult {
 }
 
 export interface PollResult {
-  status: 'pending' | 'bound' | 'failed' | 'expired'
+  status: 'pending' | 'active' | 'detached' | 'revoked' | 'expired'
   saved_method_id: string
 }
 
@@ -41,9 +41,14 @@ export interface ChargeArgs {
 }
 
 export interface ChargeResult {
-  challenge_id: string
-  receipt_jws: string
+  charge_id: string
+  saved_method_id: string
+  amount: string
+  currency: string
+  status: 'paid' | 'failed'
   paid_at: string
+  receipt_jws: string
+  payment_id: string
 }
 
 function endpoint(path: string): string {
@@ -85,26 +90,23 @@ export async function pollSavedMethod(savedMethodId: string): Promise<PollResult
 }
 
 export async function chargeSavedMethod(args: ChargeArgs): Promise<ChargeResult> {
-  const res = await fetch(endpoint('/v1/charges'), {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      amount: args.price.amount,
-      currency: args.price.currency,
-      description: args.price.description,
-      nonce: nonce(),
-      request_hash: args.requestHash,
-      api_key: HITPAY_API_KEY,
-      webhook_salt: HITPAY_WEBHOOK_SALT,
-      saved_method_id: args.savedMethodId,
-    }),
-  })
+  const res = await fetch(
+    endpoint(`/v1/saved-payment-methods/${encodeURIComponent(args.savedMethodId)}/charges`),
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        api_key: HITPAY_API_KEY,
+        amount: args.price.amount,
+        currency: args.price.currency,
+        nonce: nonce(),
+        request_hash: args.requestHash,
+      }),
+    },
+  )
   if (!res.ok) throw new Error(`mpp-service chargeSavedMethod failed: ${res.status} ${await res.text()}`)
-  const data = (await res.json()) as Partial<ChargeResult> & { checkout_url?: string }
-  if (data.checkout_url) {
-    throw new Error('mpp-service returned a checkout_url for a saved-method charge — the bind has not completed')
-  }
-  if (!data.receipt_jws || !data.challenge_id || !data.paid_at) {
+  const data = (await res.json()) as Partial<ChargeResult>
+  if (!data.charge_id || !data.receipt_jws || !data.paid_at || data.status !== 'paid') {
     throw new Error(`mpp-service chargeSavedMethod returned an unexpected body: ${JSON.stringify(data)}`)
   }
   return data as ChargeResult
