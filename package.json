@@ -1,0 +1,14 @@
+{
+  "name": "hitpay-mpp-samples",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Self-contained sample repos for every HitPay MPP use case. Clone, install, run.",
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r exec rm -rf node_modules dist data"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

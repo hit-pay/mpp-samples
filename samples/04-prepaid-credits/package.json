@@ -1,0 +1,29 @@
+{
+  "name": "@hitpay-samples/prepaid-credits",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Prepaid credits + sweep — buyer pays USDC up-front for N calls; SGD payout deferred to a sweep that issues one HitPay transfer per service.",
+  "scripts": {
+    "dev": "concurrently -n SERVER,SG -c cyan,green \"pnpm start:server\" \"pnpm start:sg\"",
+    "start:server": "tsx watch src/server.ts",
+    "start:sg": "tsx watch src/sg-receiver.ts",
+    "cli": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.0",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.15",
+    "mppx": "^0.6.7",
+    "node-cache": "^5.1.2",
+    "stripe": "^22.1.0",
+    "viem": "^2.48.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}

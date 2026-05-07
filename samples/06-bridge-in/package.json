@@ -1,0 +1,25 @@
+{
+  "name": "@hitpay-samples/bridge-in",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "HitPay MPP BRIDGE-IN — SEA buyer pays SGD via PayNow; treasury wallet signs USDC on Tempo testnet to recipient. Webhook-first detection with polling fallback.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "cli": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hit-pay/mpp": "0.0.1-beta.1",
+    "@hono/node-server": "^2.0.0",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.15",
+    "viem": "^2.48.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}
