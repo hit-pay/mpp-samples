@@ -4,8 +4,8 @@ The HitPay MPP saved-method binding pattern. First hit returns a 402 with a setu
 
 ## What this sample teaches
 
-- **Two-stage flow.** Setup (`POST /v1/saved-payment-methods`) returns a `setup_checkout_url` and a `saved_method_id`. Charge (`POST /v1/charges` with `saved_method_id`) returns a JWS receipt directly — no buyer interaction.
-- **Background poll for bind status.** While the buyer is approving the wallet in their phone, your server polls `GET /v1/saved-payment-methods/{id}` until it returns `bound`. Once bound, the saved-method-id is cached and reused.
+- **Two-stage flow.** Setup (`POST /v1/saved-payment-methods`) returns a `setup_checkout_url` and a `saved_method_id`. Charge (`POST /v1/saved-payment-methods/{id}/charges`) returns a JWS receipt directly — no buyer interaction.
+- **Background poll for bind status.** While the buyer is approving the wallet in their phone, your server polls `GET /v1/saved-payment-methods/{id}` until it returns `active`. Once active, the saved-method-id is cached and reused.
 - **Per-(currency, method) binding.** A buyer can have separate binds for `grabpay_direct/MYR` and `grabpay_direct/SGD` — they're independent in the broker.
 - **`max_amount_per_charge` ceiling.** The bind carries a per-charge cap; this sample sets it to 10× the per-session price as a stolen-token safeguard.
 
@@ -40,7 +40,7 @@ curl -i 'http://localhost:4001/tutor-saved?country=sg&method=grabpay_direct'
 **3. Wait ~2s** — the server's background poll detects the bind and writes it to the in-process store. Watch the server logs for:
 
 ```
-[ai-seller] saved method bound: SGD/grabpay_direct → smid_...
+[ai-seller] saved method active: SGD/grabpay_direct → mpp_spm_...
 ```
 
 **4. Re-hit the same endpoint — silent charge:**
